@@ -4,3 +4,5 @@ go build -o bin/main main.go
 
 Run the build
 ./bin/main
+
+Must practice go 
