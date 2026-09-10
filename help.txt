@@ -1,0 +1,6 @@
+
+Generate build 
+go build -o bin/main main.go
+
+Run the build
+./bin/main
