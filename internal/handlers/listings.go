@@ -7,6 +7,8 @@ import (
 	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/azulgautam79/olx-api/internal/middleware"
 )
 
 type listing struct {
@@ -19,15 +21,18 @@ type listing struct {
 }
 
 type ListingHandler struct {
-	db *sql.DB
+	db     *sql.DB
+	logger *slog.Logger
 }
 
-func NewListingHandler(db *sql.DB) *ListingHandler {
+func NewListingHandler(db *sql.DB, logger *slog.Logger) *ListingHandler {
 	return &ListingHandler{
-		db: db,
+		db:     db,
+		logger: logger,
 	}
 }
 
+// ! Get All Lists
 func (lh ListingHandler) GetLists(w http.ResponseWriter, r *http.Request) {
 	// r is request scoped context
 	ctx := r.Context()
@@ -39,7 +44,7 @@ func (lh ListingHandler) GetLists(w http.ResponseWriter, r *http.Request) {
 		LIMIT 100`)
 
 	if err != nil {
-		log.Printf("query: %v", err)
+		lh.logger.Error("listings query error", "err", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -49,10 +54,11 @@ func (lh ListingHandler) GetLists(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var l listing
 		if err := rows.Scan(&l.ID, &l.Title, &l.Description, &l.Price, &l.City, &l.CreatedAt); err != nil {
-			log.Printf("rows.Scan: %v", err)
+			lh.logger.Error("rows scan error", "err", err)
 			http.Error(w, "internal server error", http.StatusInternalServerError)
 			return
 		}
+		lh.logger.Info("listings fetched", "total", len(listings))
 		listings = append(listings, l)
 	}
 
@@ -67,23 +73,23 @@ func (lh ListingHandler) GetLists(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(listings)
 }
 
+// ! Delete a List
 func (lh ListingHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
-
+	requestId := middleware.RequestIDFromContext(ctx)
 	id := r.PathValue("id")
 
-	slog.Debug("debug log", "listing_id", id)
-	slog.Info("starting query", "listing_id", id)
-	slog.Warn("warn log", "listing_id", id)
+	// lh.logger.Debug("debug log", "listing_id", id)
+	// lh.logger.Info("starting query", "listing_id", id)
+	// lh.logger.Warn("warn log", "listing_id", id)
 
 	_, err := lh.db.ExecContext(ctx, `DELETE FROM listing WHERE id = $1`, id)
 
 	if err != nil {
 		// log.Printf("delete: %v", err)
-		
 
-		slog.Error("delete failed", "listing_id", id, "err", err)
+		lh.logger.Error("delete failed", "listing_id", id, "requestId", requestId, "err", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
