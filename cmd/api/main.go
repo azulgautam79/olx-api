@@ -40,6 +40,7 @@ func main() {
 	mux.HandleFunc("GET /healthz", handlers.Healthz)
 	mux.HandleFunc("GET /listings", lh.GetLists)
 	mux.HandleFunc("DELETE /listings/{id}", lh.Delete)
+	mux.HandleFunc("POST /listings", lh.Create)
 
 	handler := middleware.RequestId(mux)
 

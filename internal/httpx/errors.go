@@ -9,7 +9,7 @@ type Code string
 
 const (
 	CodeInvalidID        Code = "invalid_id"
-	CodeMalformedJson    Code = "malformed_json"
+	CodeMalformedJSON    Code = "malformed_json"
 	CodeUnAuthenticated  Code = "unauthenticated"
 	CodeForbidden        Code = "forbidden"
 	CodeNotFound         Code = "not_found"
